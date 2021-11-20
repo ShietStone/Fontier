@@ -23,15 +23,17 @@ public class BitmapFont {
      * 
      * @param font The {@link Font} to render the chars of
      * @param charCount The amount of chars to render
+     * @param manualCharWidth If the char width will be calculated manually by the
+     * 		 				  {@link BitmapRenderer}
      */
-    public BitmapFont(Font font, int charCount) {
+    public BitmapFont(Font font, int charCount, boolean manualCharWidth) {
         if(font == null)
             throw new IllegalArgumentException("Font is null");
         
         if(charCount <= 0)
             throw new IllegalArgumentException("Char count must be greater than zero");
         
-        BitmapRenderer bitmapRenderer = new BitmapRenderer(font);
+        BitmapRenderer bitmapRenderer = new BitmapRenderer(font, manualCharWidth);
         ascent = bitmapRenderer.getAscent();
         descent = bitmapRenderer.getDescent();
         baseLine = bitmapRenderer.getBaseLine();
@@ -46,6 +48,17 @@ public class BitmapFont {
         }
         
         bitmapRenderer.dispose();
+    }
+    
+    /**
+     * Initializes this {@link BitmapFont} using the given {@link Font} and and default values for
+     * all other arguments. Throws an {@link IllegalArgumentException} if the font is null. All 
+     * rendered chars are  to have the same height.
+     * 
+     * @param font The {@link Font} to render the chars of
+     */
+    public BitmapFont(Font font) {
+    	this(font, 256, false);
     }
     
     /**

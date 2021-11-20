@@ -18,14 +18,18 @@ public class BitmapRenderer {
     private FontMetrics fontMetrics;
     private int baseLine;
     private int subImageHeight;
+    private boolean manualCharWidth;
     private boolean disposed;
     
     /**
-     * Initializes this object with the given {@link Font}, which may not be null.
+     * Initializes this object with the given {@link Font}, which may not be null. The flag 
+     * manualCharWidth determines if the width of each rendered char should be calculated manually
+     * or use the value given by the {@link Font}. Sometimes the {@link Font} gives false values.
      * 
      * @param font The {@link Font} to use in the rendering process
+     * @param manuaCharWidth If the char width will be calculated manually
      */
-    public BitmapRenderer(Font font) {
+    public BitmapRenderer(Font font, boolean manualCharWidth) {
         if(font == null)
             throw new IllegalArgumentException("The font is null");
         
@@ -34,7 +38,20 @@ public class BitmapRenderer {
         fontMetrics = graphics.getFontMetrics(font);
         baseLine = fontMetrics.getMaxAscent();
         subImageHeight = fontMetrics.getMaxAscent() + fontMetrics.getDescent();
+        this.manualCharWidth = manualCharWidth;
         disposed = false;
+        
+        graphics.setFont(font);
+    }
+    
+    /**
+     * Initializes this object with the given {@link Font}, which may not be null. The char width
+     * will not be calculated manually.
+     * 
+     * @param font The {@link Font} to use in the rendering process
+     */
+    public BitmapRenderer(Font font) {
+        this(font, false);
     }
     
     /**
@@ -53,14 +70,15 @@ public class BitmapRenderer {
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
         graphics.setColor(Color.WHITE);
         graphics.drawString(c + "", 0, baseLine);
-        
-        int charWidth = findWidth(image);
+
         int metricsCharWidth = fontMetrics.charWidth(c);
+        int calculatedCharWidth = Math.min(findWidth(image) + findPadding(image), image.getWidth());
+        int charWidth = manualCharWidth ? calculatedCharWidth : metricsCharWidth;
         
-        if(charWidth == 0 && metricsCharWidth == 0)
+        if(charWidth == 0)
             return null;
         
-        return copyImage(image.getSubimage(0, 0, charWidth != 0 ? charWidth : metricsCharWidth, subImageHeight));
+        return copyImage(image.getSubimage(0, 0, charWidth, subImageHeight));
     }
     
     /**
@@ -122,6 +140,15 @@ public class BitmapRenderer {
                     return x + 1;
         
         return 0;
+    }
+    
+    private int findPadding(BufferedImage image) {
+        for(int x = 0; x < image.getHeight(); x++)
+            for(int y = 0; y < image.getHeight(); y++)
+                if(new Color(image.getRGB(x, y)).getRed() > 0)
+                    return x + 1;
+        
+        return 0;	
     }
     
     private BufferedImage copyImage(BufferedImage image) {
